@@ -557,8 +557,7 @@ def api_get_data():
             send_voice_list = {"voiceList": voice_list}
             wsa_server.get_web_instance().add_cmd(send_voice_list)
         elif config_util.tts_module == 'moss':
-            from tts.moss_tts import get_voice_list
-            voice_list = get_voice_list()
+            voice_list = [{"id": "moss-default", "name": "MOSS Chinese voice"}]
             send_voice_list = {"voiceList": voice_list}
             wsa_server.get_web_instance().add_cmd(send_voice_list)
         elif config_util.tts_module == 'qwen':
@@ -1733,13 +1732,26 @@ def transparent_stream():
                             audio_path = moss.to_sample(full_text, None)
                             moss.close()
                             if audio_path and os.path.exists(audio_path):
-                                interact_data = {
-                                    'user': username,
-                                    'audio': audio_path,
-                                    'isend': True,
-                                    'isfirst': True,
+                                audio_url = config_util.fay_url.rstrip("/") + "/audio/" + os.path.basename(audio_path)
+                                ws_message = {
+                                    "Topic": "human",
+                                    "Data": {
+                                        "Key": "audio",
+                                        "Value": os.path.abspath(audio_path),
+                                        "HttpValue": audio_url,
+                                        "Text": full_text,
+                                        "Time": 5,
+                                        "Type": 1,
+                                        "IsFirst": 1,
+                                        "IsEnd": 1,
+                                        "CONV_ID": conversation_id,
+                                        "CONV_MSG_NO": 0,
+                                    },
+                                    "Username": username,
+                                    "robot": config_util.fay_url.rstrip("/") + "/robot/Speaking.jpg",
                                 }
-                                fay_booter.feiFei.on_interact(Interact('transparent_pass', 2, interact_data))
+                                wsa_server.get_instance().add_cmd(ws_message)
+                                util.printInfo(1, username, f"[MOSS TTS] digital human audio sent: {audio_url}", time.time())
                             else:
                                 util.printInfo(1, username, '[流式透传] MOSS 音频生成失败', time.time())
                         except Exception as me:

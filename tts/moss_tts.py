@@ -1,6 +1,5 @@
 import base64
 import os
-import re
 import time
 from pathlib import Path
 
@@ -11,46 +10,40 @@ from utils import config_util as cfg
 from utils import util
 
 
-_ZH_VOICE_PATTERN = re.compile(r"^zh_(\d+)\.wav$", re.IGNORECASE)
-
-
 def _configured_prompt_path():
     return Path(str(getattr(cfg, "moss_tts_prompt_audio", "") or "")).expanduser()
 
 
-def get_voice_list():
-    """Return only Chinese MOSS prompt voices beside the configured default."""
-    configured_path = _configured_prompt_path()
-    voices = []
-    for path in configured_path.parent.glob("zh_*.wav"):
-        match = _ZH_VOICE_PATTERN.match(path.name)
-        if match:
-            voices.append((int(match.group(1)), path.stem))
-    voices.sort(key=lambda item: item[0])
-    if voices:
-        return [
-            {"id": voice_id, "name": "MOSS 中文音色 {}".format(number)}
-            for number, voice_id in voices
-        ]
-    return [{"id": "moss-default", "name": "MOSS 中文默认音色"}]
-
-
-def _selected_voice_id():
-    try:
-        return str(cfg.config.get("attribute", {}).get("voice", "") or "").strip()
-    except Exception:
-        return ""
-
-
 def _resolve_prompt_path():
-    configured_path = _configured_prompt_path()
-    selected_voice = _selected_voice_id()
-    if selected_voice and selected_voice != "moss-default" and re.fullmatch(r"zh_\d+", selected_voice):
-        candidate = configured_path.parent / (selected_voice + ".wav")
-        if candidate.is_file():
-            return candidate
-        util.log(1, "[!] MOSS voice not found, fallback to default: " + str(candidate))
-    return configured_path
+    return _configured_prompt_path()
+
+
+def build_stream_audio_message(audio_path, text, base_url, username,
+                               conversation_id, seq, first, end):
+    """Build the WebSocket audio contract consumed by the Flood frontend."""
+    try:
+        sequence = int(seq)
+    except (TypeError, ValueError):
+        sequence = 0
+    normalized_base_url = str(base_url or "").rstrip("/")
+    audio_name = os.path.basename(str(audio_path))
+    return {
+        "Topic": "human",
+        "Data": {
+            "Key": "audio",
+            "Value": os.path.abspath(str(audio_path)),
+            "HttpValue": normalized_base_url + "/audio/" + audio_name,
+            "Text": str(text or ""),
+            "Time": 5,
+            "Type": 1,
+            "IsFirst": 1 if first else 0,
+            "IsEnd": 1 if end else 0,
+            "CONV_ID": str(conversation_id or ""),
+            "CONV_MSG_NO": sequence,
+        },
+        "Username": str(username or "User"),
+        "robot": normalized_base_url + "/robot/Speaking.jpg",
+    }
 
 
 class Speech:

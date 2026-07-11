@@ -25,7 +25,8 @@
             "join": 10
         },
         "playSound": true,
-        "visualization": false
+        "visualization": false,
+        "voice": "moss-default"
     },
     "items": [],
     "memory": {

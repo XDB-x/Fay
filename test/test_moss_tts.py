@@ -112,6 +112,30 @@ class MossTtsTest(unittest.TestCase):
             self.assertIsNone(Speech().to_sample("测试文本", None))
         post.assert_not_called()
 
+    def test_build_stream_audio_message_preserves_chunk_contract(self):
+        from tts.moss_tts import build_stream_audio_message
+
+        message = build_stream_audio_message(
+            audio_path="C:/fay/samples/chunk-2.wav",
+            text="second chunk",
+            base_url="http://192.168.2.3:5000",
+            username="fay-user",
+            conversation_id="conv-1",
+            seq=2,
+            first=False,
+            end=True,
+        )
+
+        self.assertEqual(message["Topic"], "human")
+        self.assertEqual(message["Username"], "fay-user")
+        self.assertEqual(message["Data"]["Key"], "audio")
+        self.assertEqual(message["Data"]["HttpValue"], "http://192.168.2.3:5000/audio/chunk-2.wav")
+        self.assertEqual(message["Data"]["Text"], "second chunk")
+        self.assertEqual(message["Data"]["CONV_ID"], "conv-1")
+        self.assertEqual(message["Data"]["CONV_MSG_NO"], 2)
+        self.assertEqual(message["Data"]["IsFirst"], 0)
+        self.assertEqual(message["Data"]["IsEnd"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
