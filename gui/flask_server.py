@@ -1724,30 +1724,29 @@ def transparent_stream():
             if full_text:
                 util.printInfo(1, username, f'[流式透传] 提交完整文本 len={len(full_text)} text={full_text[:50]}', time.time())
 
-                # MOSS TTS: 直接生成音频文件，绕过流式文本处理器
+                # MOSS TTS: 后台异步生成音频，立即返回
                 if config_util.tts_module == 'moss':
-                    try:
-                        from tts.moss_tts import Speech as MossSpeech
-                        moss = MossSpeech()
-                        audio_path = moss.to_sample(full_text, None)
-                        moss.close()
-                        if audio_path and os.path.exists(audio_path):
-                            interact_data = {
-                                'user': username,
-                                'audio': audio_path,
-                                'isend': True,
-                                'isfirst': True,
-                            }
-                            success = fay_booter.feiFei.on_interact(Interact('transparent_pass', 2, interact_data))
-                            if success == 'success':
-                                return jsonify({'code': 200, 'message': '成功'})
-                            return jsonify({'code': 500, 'message': '播放失败'})
-                        else:
-                            util.printInfo(1, username, '[流式透传] MOSS 音频生成失败', time.time())
-                            return jsonify({'code': 500, 'message': 'MOSS 音频生成失败'})
-                    except Exception as me:
-                        util.printInfo(1, username, f'[流式透传] MOSS TTS 异常: {me}', time.time())
-                        return jsonify({'code': 500, 'message': f'MOSS TTS 异常: {me}'})
+                    def _moss_bg():
+                        try:
+                            from tts.moss_tts import Speech as MossSpeech
+                            moss = MossSpeech()
+                            audio_path = moss.to_sample(full_text, None)
+                            moss.close()
+                            if audio_path and os.path.exists(audio_path):
+                                interact_data = {
+                                    'user': username,
+                                    'audio': audio_path,
+                                    'isend': True,
+                                    'isfirst': True,
+                                }
+                                fay_booter.feiFei.on_interact(Interact('transparent_pass', 2, interact_data))
+                            else:
+                                util.printInfo(1, username, '[流式透传] MOSS 音频生成失败', time.time())
+                        except Exception as me:
+                            util.printInfo(1, username, f'[流式透传] MOSS TTS 异常: {me}', time.time())
+                    threading.Thread(target=_moss_bg, daemon=True).start()
+                    util.printInfo(1, username, f'[流式透传] 已提交后台 TTS len={len(full_text)}', time.time())
+                    return jsonify({'code': 200, 'message': '已提交后台合成'})
 
                 # 其他 TTS: 文本透传
                 interact_data = {
