@@ -12,6 +12,7 @@ import datetime
 import pytz
 import logging
 import uuid
+import threading
 from urllib.parse import urlparse, urljoin
 try:
     from langchain_openai import ChatOpenAI
@@ -1658,6 +1659,10 @@ def transparent_pass():
         return jsonify({'code': 500, 'message': f'\u51fa\u9519: {e}'}), 500
 
 #流式透传接口
+# 缓冲结构: {(username, conversationId): {"text": str, "voice": str|None}}
+_stream_buffer = {}
+_stream_buffer_lock = threading.Lock()
+
 @__app.route('/transparent-stream', methods=['post'])
 def transparent_stream():
     try:
@@ -1678,36 +1683,65 @@ def transparent_stream():
         is_end = _as_bool(data.get('isEnd', False))
         queue_mode = _as_bool(data.get('queue', False))
         voice = data.get('voice', None)
+        conversation_id = data.get('conversationId', '')
+        stream_key = (username, conversation_id)
 
-        if voice and str(voice).strip():
-            voice = str(voice).strip()
-            try:
-                config_util.load_config()
-                if voice != config_util.config.get('interact', {}).get('voice', ''):
-                    config_util.config.setdefault('interact', {})['voice'] = voice
-                    config_util.save_config(config_util.config)
-                    util.printInfo(1, username, f'[流式透传] 切换音色: {voice}', time.time())
-            except Exception as ve:
-                util.printInfo(1, username, f'[流式透传] 音色切换失败: {ve}', time.time())
+        # 首个片段: 清空之前可能残留的缓冲区
+        if is_first:
+            with _stream_buffer_lock:
+                _stream_buffer.pop(stream_key, None)
 
-        if text or is_end:
-            interact_data = {
-                'user': username,
-                'text': text,
-                'isfirst': is_first,
-                'isend': is_end,
-                'no_reply': True,
-            }
-            if queue_mode:
-                interact_data['queue'] = True
-                interact_data['queue_playback'] = True
+        # 积累文本片段
+        if text:
+            with _stream_buffer_lock:
+                entry = _stream_buffer.get(stream_key)
+                if entry is None:
+                    entry = {"text": "", "voice": voice}
+                    _stream_buffer[stream_key] = entry
+                entry["text"] += text
+                if voice and str(voice).strip():
+                    entry["voice"] = str(voice).strip()
 
-            util.printInfo(1, username, f'[流式透传] seq={data.get("seq", 0)} first={is_first} end={is_end} text={text[:50]}', time.time())
-            success = fay_booter.feiFei.on_interact(Interact('transparent_pass', 2, interact_data))
-            if success == 'success':
-                return jsonify({'code': 200, 'message': '成功'})
+        # 仅在结束标记时提交完整文本
+        if is_end:
+            with _stream_buffer_lock:
+                entry = _stream_buffer.pop(stream_key, {"text": text if text else "", "voice": voice})
 
-        return jsonify({'code': 500, 'message': '未知原因出错'})
+            full_text = entry.get("text", "")
+            chosen_voice = entry.get("voice")
+
+            if chosen_voice and str(chosen_voice).strip():
+                chosen_voice = str(chosen_voice).strip()
+                try:
+                    config_util.load_config()
+                    if chosen_voice != config_util.config.get('interact', {}).get('voice', ''):
+                        config_util.config.setdefault('interact', {})['voice'] = chosen_voice
+                        config_util.save_config(config_util.config)
+                        util.printInfo(1, username, f'[流式透传] 切换音色: {chosen_voice}', time.time())
+                except Exception as ve:
+                    util.printInfo(1, username, f'[流式透传] 音色切换失败: {ve}', time.time())
+
+            if full_text:
+                interact_data = {
+                    'user': username,
+                    'text': full_text,
+                    'isfirst': True,
+                    'isend': True,
+                    'no_reply': True,
+                }
+                if queue_mode:
+                    interact_data['queue'] = True
+                    interact_data['queue_playback'] = True
+
+                util.printInfo(1, username, f'[流式透传] 提交完整文本 len={len(full_text)} text={full_text[:50]}', time.time())
+                success = fay_booter.feiFei.on_interact(Interact('transparent_pass', 2, interact_data))
+                if success == 'success':
+                    return jsonify({'code': 200, 'message': '成功'})
+
+            return jsonify({'code': 200, 'message': '空文本'})
+
+        # 中间片段：正常返回
+        return jsonify({'code': 200, 'message': '已缓冲'})
     except Exception as e:
         return jsonify({'code': 500, 'message': f'出错: {e}'}), 500
 
