@@ -1656,6 +1656,61 @@ def transparent_pass():
         return jsonify({'code': 500, 'message': '\u672a\u77e5\u539f\u56e0\u51fa\u9519'})
     except Exception as e:
         return jsonify({'code': 500, 'message': f'\u51fa\u9519: {e}'}), 500
+
+#流式透传接口
+@__app.route('/transparent-stream', methods=['post'])
+def transparent_stream():
+    try:
+        data = request.get_json(silent=True)
+        if data is None:
+            data = request.form.get('data')
+            if data:
+                data = json.loads(data)
+            else:
+                data = {}
+
+        if not isinstance(data, dict):
+            data = {}
+
+        username = data.get('user', 'User')
+        text = data.get('text', '') or ''
+        is_first = _as_bool(data.get('isFirst', False))
+        is_end = _as_bool(data.get('isEnd', False))
+        queue_mode = _as_bool(data.get('queue', False))
+        voice = data.get('voice', None)
+
+        if voice and str(voice).strip():
+            voice = str(voice).strip()
+            try:
+                config_util.load_config()
+                if voice != config_util.config.get('interact', {}).get('voice', ''):
+                    config_util.config.setdefault('interact', {})['voice'] = voice
+                    config_util.save_config(config_util.config)
+                    util.printInfo(1, username, f'[流式透传] 切换音色: {voice}', time.time())
+            except Exception as ve:
+                util.printInfo(1, username, f'[流式透传] 音色切换失败: {ve}', time.time())
+
+        if text or is_end:
+            interact_data = {
+                'user': username,
+                'text': text,
+                'isfirst': is_first,
+                'isend': is_end,
+                'no_reply': True,
+            }
+            if queue_mode:
+                interact_data['queue'] = True
+                interact_data['queue_playback'] = True
+
+            util.printInfo(1, username, f'[流式透传] seq={data.get("seq", 0)} first={is_first} end={is_end} text={text[:50]}', time.time())
+            success = fay_booter.feiFei.on_interact(Interact('transparent_pass', 2, interact_data))
+            if success == 'success':
+                return jsonify({'code': 200, 'message': '成功'})
+
+        return jsonify({'code': 500, 'message': '未知原因出错'})
+    except Exception as e:
+        return jsonify({'code': 500, 'message': f'出错: {e}'}), 500
+
 @__app.route('/api/clear-memory', methods=['POST'])
 def api_clear_memory():
     try:
