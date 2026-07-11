@@ -1,0 +1,13 @@
+[
+  {
+    "node_id": 0,
+    "node_type": "conversation",
+    "content": "web-user：你好\nFay：你好呀！今天有什么需要帮忙的吗？",
+    "importance": 5,
+    "datetime": "2026/07/08 13:41:26",
+    "created": 0,
+    "last_retrieved": 0,
+    "pointer_id": null,
+    "tags": []
+  }
+]
