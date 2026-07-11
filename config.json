@@ -11,7 +11,7 @@
         "job": "\u52a9\u7406",
         "name": "Fay",
         "position": "\u966a\u4f34",
-        "voice": "abin",
+        "voice": "moss-default",
         "zodiac": "\u86c7"
     },
     "interact": {
@@ -36,7 +36,7 @@
         "automatic_player_status": false,
         "automatic_player_url": "http://127.0.0.1:6000",
         "liveRoom": {
-            "enabled": true,
+            "enabled": false,
             "url": ""
         },
         "record": {

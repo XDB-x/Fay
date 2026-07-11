@@ -127,3 +127,22 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Runtime config with real secrets
+system.conf
+
+# IDE
+.idea/
+
+# WorkBuddy
+.workbuddy/
+
+# Cache & temp
+cache_data/
+
+# Generated samples
+samples/
+
+# Runtime memory databases
+memory/*.db
+memory/*.sqlite3

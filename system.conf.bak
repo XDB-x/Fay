@@ -26,6 +26,20 @@ ali_tss_key_id=
 ali_tss_key_secret=
 ali_tss_app_key=
 
+# Qwen-TTS Realtime（使用 tts_module=qwen 时填写）
+qwen_tts_model=qwen3-tts-flash-realtime
+qwen_tts_voice=Neil
+qwen_tts_api_key=
+qwen_tts_workspace_id=
+qwen_tts_region=cn-beijing
+qwen_tts_timeout_seconds=30
+
+# MOSS-TTS-Nano local ONNX CPU
+moss_tts_base_url=http://127.0.0.1:18083
+moss_tts_prompt_audio=assets/voices/flood-default.wav
+moss_tts_timeout_seconds=120
+moss_tts_cpu_threads=4
+
 # Doubao-语音合成 服务密钥 https://www.volcengine.com/product/voice-tech
 volcano_tts_appid=
 volcano_tts_access_token=

@@ -78,6 +78,16 @@ volcano_tts_appid = None
 volcano_tts_access_token = None
 volcano_tts_cluster = None
 volcano_tts_voice_type = None
+qwen_tts_model = None
+qwen_tts_voice = None
+qwen_tts_api_key = None
+qwen_tts_workspace_id = None
+qwen_tts_region = None
+qwen_tts_timeout_seconds = None
+moss_tts_base_url = None
+moss_tts_prompt_audio = None
+moss_tts_timeout_seconds = None
+moss_tts_cpu_threads = None
 start_mode = None
 fay_url = None
 system_conf_path = None
@@ -316,6 +326,16 @@ def load_config(force_reload=False):
     global volcano_tts_access_token
     global volcano_tts_cluster
     global volcano_tts_voice_type
+    global qwen_tts_model
+    global qwen_tts_voice
+    global qwen_tts_api_key
+    global qwen_tts_workspace_id
+    global qwen_tts_region
+    global qwen_tts_timeout_seconds
+    global moss_tts_base_url
+    global moss_tts_prompt_audio
+    global moss_tts_timeout_seconds
+    global moss_tts_cpu_threads
     global start_mode
     global fay_url
     global use_bionic_memory
@@ -541,6 +561,16 @@ def load_config(force_reload=False):
     volcano_tts_access_token = system_config.get('key', 'volcano_tts_access_token', fallback=None)
     volcano_tts_cluster = system_config.get('key', 'volcano_tts_cluster', fallback=None)
     volcano_tts_voice_type = system_config.get('key', 'volcano_tts_voice_type', fallback=None)
+    qwen_tts_model = system_config.get('key', 'qwen_tts_model', fallback=None)
+    qwen_tts_voice = system_config.get('key', 'qwen_tts_voice', fallback=None)
+    qwen_tts_api_key = system_config.get('key', 'qwen_tts_api_key', fallback=None)
+    qwen_tts_workspace_id = system_config.get('key', 'qwen_tts_workspace_id', fallback=None)
+    qwen_tts_region = system_config.get('key', 'qwen_tts_region', fallback=None)
+    qwen_tts_timeout_seconds = system_config.get('key', 'qwen_tts_timeout_seconds', fallback=None)
+    moss_tts_base_url = system_config.get('key', 'moss_tts_base_url', fallback='http://127.0.0.1:18083')
+    moss_tts_prompt_audio = system_config.get('key', 'moss_tts_prompt_audio', fallback='assets/voices/flood-default.wav')
+    moss_tts_timeout_seconds = system_config.getint('key', 'moss_tts_timeout_seconds', fallback=120)
+    moss_tts_cpu_threads = system_config.getint('key', 'moss_tts_cpu_threads', fallback=4)
 
     # 读取 Embedding API 配置（base_url 可单独配置，未配置则复用 LLM）
     embedding_api_model = system_config.get('key', 'embedding_api_model', fallback='BAAI/bge-large-zh-v1.5')
@@ -601,6 +631,16 @@ def load_config(force_reload=False):
         'volcano_tts_access_token': volcano_tts_access_token,
         'volcano_tts_cluster': volcano_tts_cluster,
         'volcano_tts_voice_type': volcano_tts_voice_type,
+        'qwen_tts_model': qwen_tts_model,
+        'qwen_tts_voice': qwen_tts_voice,
+        'qwen_tts_api_key': qwen_tts_api_key,
+        'qwen_tts_workspace_id': qwen_tts_workspace_id,
+        'qwen_tts_region': qwen_tts_region,
+        'qwen_tts_timeout_seconds': qwen_tts_timeout_seconds,
+        'moss_tts_base_url': moss_tts_base_url,
+        'moss_tts_prompt_audio': moss_tts_prompt_audio,
+        'moss_tts_timeout_seconds': moss_tts_timeout_seconds,
+        'moss_tts_cpu_threads': moss_tts_cpu_threads,
 
         'start_mode': start_mode,
         'fay_url': fay_url,

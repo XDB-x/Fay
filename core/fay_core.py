@@ -123,6 +123,16 @@ elif cfg.tts_module == 'volcano':
 
     from tts.volcano_tts import Speech
 
+elif cfg.tts_module == 'moss':
+
+
+    from tts.moss_tts import Speech
+
+elif cfg.tts_module == 'qwen':
+
+
+    from tts.qwen_tts import Speech
+
 
 else:
 
@@ -771,11 +781,9 @@ class FeiFei:
 
 
             except BaseException as e:
-
-
-                print(e)
-
-
+                import traceback as _tb
+                _tb.print_exc()
+                util.log(3, f'transparent_pass 流式处理异常：{e}')
                 return e
 
 

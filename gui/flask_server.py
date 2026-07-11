@@ -555,6 +555,15 @@ def api_get_data():
             ]
             send_voice_list = {"voiceList": voice_list}
             wsa_server.get_web_instance().add_cmd(send_voice_list)
+        elif config_util.tts_module == 'moss':
+            from tts.moss_tts import get_voice_list
+            voice_list = get_voice_list()
+            send_voice_list = {"voiceList": voice_list}
+            wsa_server.get_web_instance().add_cmd(send_voice_list)
+        elif config_util.tts_module == 'qwen':
+            voice_list = [{"id": "Neil", "name": "阿闻"}]
+            send_voice_list = {"voiceList": voice_list}
+            wsa_server.get_web_instance().add_cmd(send_voice_list)
         elif config_util.tts_module == 'volcano':
             voice_list = [
                 {"id": "BV001_streaming", "name": "通用女声"},
