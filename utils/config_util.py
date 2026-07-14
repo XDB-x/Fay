@@ -85,6 +85,7 @@ qwen_tts_workspace_id = None
 qwen_tts_region = None
 qwen_tts_timeout_seconds = None
 moss_tts_base_url = None
+moss_tts_backend = None
 moss_tts_prompt_audio = None
 moss_tts_timeout_seconds = None
 moss_tts_cpu_threads = None
@@ -333,6 +334,7 @@ def load_config(force_reload=False):
     global qwen_tts_region
     global qwen_tts_timeout_seconds
     global moss_tts_base_url
+    global moss_tts_backend
     global moss_tts_prompt_audio
     global moss_tts_timeout_seconds
     global moss_tts_cpu_threads
@@ -568,6 +570,7 @@ def load_config(force_reload=False):
     qwen_tts_region = system_config.get('key', 'qwen_tts_region', fallback=None)
     qwen_tts_timeout_seconds = system_config.get('key', 'qwen_tts_timeout_seconds', fallback=None)
     moss_tts_base_url = system_config.get('key', 'moss_tts_base_url', fallback='http://127.0.0.1:18083')
+    moss_tts_backend = system_config.get('key', 'moss_tts_backend', fallback='nano')
     moss_tts_prompt_audio = system_config.get('key', 'moss_tts_prompt_audio', fallback='assets/voices/flood-default.wav')
     moss_tts_timeout_seconds = system_config.getint('key', 'moss_tts_timeout_seconds', fallback=120)
     moss_tts_cpu_threads = system_config.getint('key', 'moss_tts_cpu_threads', fallback=4)
@@ -638,6 +641,7 @@ def load_config(force_reload=False):
         'qwen_tts_region': qwen_tts_region,
         'qwen_tts_timeout_seconds': qwen_tts_timeout_seconds,
         'moss_tts_base_url': moss_tts_base_url,
+        'moss_tts_backend': moss_tts_backend,
         'moss_tts_prompt_audio': moss_tts_prompt_audio,
         'moss_tts_timeout_seconds': moss_tts_timeout_seconds,
         'moss_tts_cpu_threads': moss_tts_cpu_threads,

@@ -46,6 +46,56 @@ def build_stream_audio_message(audio_path, text, base_url, username,
     }
 
 
+def build_stream_pcm_message(pcm_bytes, text, username, conversation_id, seq, first, end):
+    """Build the continuous PCM contract used only by MOSS Realtime."""
+    try:
+        sequence = int(seq)
+    except (TypeError, ValueError):
+        sequence = 0
+    return {
+        "Topic": "human",
+        "Data": {
+            "Key": "audio_pcm",
+            "PcmBase64": base64.b64encode(bytes(pcm_bytes or b"")).decode("ascii"),
+            "SampleRate": 24000,
+            "Channels": 1,
+            "SampleWidth": 2,
+            "Text": str(text or ""),
+            "Type": 1,
+            "IsFirst": 1 if first else 0,
+            "IsEnd": 1 if end else 0,
+            "CONV_ID": str(conversation_id or ""),
+            "CONV_MSG_NO": sequence,
+        },
+        "Username": str(username or "User"),
+    }
+
+def build_stream_end_message(base_url, username, conversation_id, seq, first):
+    """Build the final WebSocket marker when no final audio chunk exists."""
+    try:
+        sequence = int(seq)
+    except (TypeError, ValueError):
+        sequence = 0
+    normalized_base_url = str(base_url or "").rstrip("/")
+    return {
+        "Topic": "human",
+        "Data": {
+            "Key": "audio",
+            "Value": "",
+            "HttpValue": "",
+            "Text": "",
+            "Time": 0,
+            "Type": 1,
+            "IsFirst": 1 if first else 0,
+            "IsEnd": 1,
+            "CONV_ID": str(conversation_id or ""),
+            "CONV_MSG_NO": sequence,
+        },
+        "Username": str(username or "User"),
+        "robot": normalized_base_url + "/robot/Normal.jpg",
+    }
+
+
 class Speech:
     def __init__(self):
         self.session = requests.Session()

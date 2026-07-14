@@ -1684,6 +1684,102 @@ def transparent_stream():
         voice = data.get('voice', None)
         conversation_id = data.get('conversationId', '')
         stream_key = (username, conversation_id)
+        try:
+            seq = int(data.get('seq', 0))
+        except (TypeError, ValueError):
+            seq = 0
+
+        # MOSS is not an audio-streaming model. Synthesize each Flood speech
+        # chunk immediately so the first sentence can play before the reply ends.
+        if config_util.tts_module == 'moss':
+            if getattr(config_util, 'moss_tts_backend', 'nano') == 'realtime':
+                from tts.moss_realtime_stream import get_manager
+                from tts.moss_tts import build_stream_pcm_message
+
+                def _emit_realtime_audio(pcm_bytes, audio_text, first, end, audio_seq):
+                    if pcm_bytes is None:
+                        message = build_stream_pcm_message(
+                            b"", "", username, conversation_id, audio_seq, first, True
+                        )
+                    else:
+                        message = build_stream_pcm_message(
+                            pcm_bytes, audio_text, username, conversation_id, audio_seq, first, end
+                        )
+                    wsa_server.get_instance().add_cmd(message)
+                    util.printInfo(
+                        1, username,
+                        f'[MOSS Realtime] audio sent seq={audio_seq} first={first} end={end}',
+                        time.time(),
+                    )
+
+                def _emit_realtime_error(error_key, message):
+                    util.printInfo(1, username, message, time.time())
+
+                try:
+                    session_id = get_manager().submit(
+                        stream_key, text, is_first, is_end,
+                        _emit_realtime_audio, _emit_realtime_error,
+                    )
+                    util.printInfo(
+                        1, username,
+                        f'[MOSS Realtime] text accepted session={session_id} seq={seq} end={is_end}',
+                        time.time(),
+                    )
+                    return jsonify({'code': 200, 'message': 'accepted'})
+                except Exception as exc:
+                    util.printInfo(1, username, '[MOSS Realtime] request failed: ' + str(exc), time.time())
+                    return jsonify({'code': 500, 'message': 'MOSS Realtime request failed'}), 500
+
+            from tts.moss_tts import (
+                Speech as MossSpeech,
+                build_stream_audio_message,
+                build_stream_end_message,
+            )
+            if getattr(config_util, 'moss_tts_backend', 'nano') == 'realtime':
+                from tts.moss_realtime_tts import Speech as MossSpeech
+
+
+            if not text.strip():
+                if is_end:
+                    wsa_server.get_instance().add_cmd(
+                        build_stream_end_message(
+                            config_util.fay_url,
+                            username,
+                            conversation_id,
+                            seq,
+                            is_first,
+                        )
+                    )
+                return jsonify({'code': 200, 'message': 'accepted'})
+
+            moss = MossSpeech()
+            try:
+                audio_path = moss.to_sample(text, None)
+            finally:
+                moss.close()
+
+            if not audio_path or not os.path.exists(audio_path):
+                util.printInfo(1, username, '[MOSS stream] audio generation failed', time.time())
+                return jsonify({'code': 500, 'message': 'MOSS audio generation failed'})
+
+            message = build_stream_audio_message(
+                audio_path,
+                text,
+                config_util.fay_url,
+                username,
+                conversation_id,
+                seq,
+                is_first,
+                is_end,
+            )
+            wsa_server.get_instance().add_cmd(message)
+            util.printInfo(
+                1,
+                username,
+                f'[MOSS stream] audio sent seq={seq} first={is_first} end={is_end}',
+                time.time(),
+            )
+            return jsonify({'code': 200, 'message': 'accepted'})
 
         # 首个片段: 清空之前可能残留的缓冲区
         if is_first:

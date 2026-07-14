@@ -136,6 +136,51 @@ class MossTtsTest(unittest.TestCase):
         self.assertEqual(message["Data"]["IsFirst"], 0)
         self.assertEqual(message["Data"]["IsEnd"], 1)
 
+    def test_build_stream_end_message_has_no_audio_url(self):
+        from tts.moss_tts import build_stream_end_message
 
+        message = build_stream_end_message(
+            base_url="http://192.168.2.3:5000",
+            username="fay-user",
+            conversation_id="conv-1",
+            seq=3,
+            first=False,
+        )
+
+        self.assertEqual(message["Topic"], "human")
+        self.assertEqual(message["Username"], "fay-user")
+        self.assertEqual(message["Data"]["HttpValue"], "")
+        self.assertEqual(message["Data"]["Value"], "")
+        self.assertEqual(message["Data"]["CONV_ID"], "conv-1")
+        self.assertEqual(message["Data"]["CONV_MSG_NO"], 3)
+        self.assertEqual(message["Data"]["IsFirst"], 0)
+        self.assertEqual(message["Data"]["IsEnd"], 1)
+
+
+
+    def test_build_stream_pcm_message_preserves_continuous_pcm_contract(self):
+        from tts.moss_tts import build_stream_pcm_message
+
+        message = build_stream_pcm_message(
+            pcm_bytes=b"\x00\x00\xff\x7f",
+            text="realtime chunk",
+            username="fay-user",
+            conversation_id="conv-1",
+            seq=2,
+            first=False,
+            end=True,
+        )
+
+        self.assertEqual(message["Topic"], "human")
+        self.assertEqual(message["Username"], "fay-user")
+        self.assertEqual(message["Data"]["Key"], "audio_pcm")
+        self.assertEqual(message["Data"]["PcmBase64"], "AAD/fw==")
+        self.assertEqual(message["Data"]["SampleRate"], 24000)
+        self.assertEqual(message["Data"]["Channels"], 1)
+        self.assertEqual(message["Data"]["SampleWidth"], 2)
+        self.assertEqual(message["Data"]["CONV_ID"], "conv-1")
+        self.assertEqual(message["Data"]["CONV_MSG_NO"], 2)
+        self.assertEqual(message["Data"]["IsFirst"], 0)
+        self.assertEqual(message["Data"]["IsEnd"], 1)
 if __name__ == "__main__":
     unittest.main()
