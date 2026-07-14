@@ -87,7 +87,7 @@ class _RealtimeSession:
         buffer = bytearray()
         # Fay queues each WAV as a separate playback item. Keep each item long enough
         # to avoid audible breaks inside a short sentence while retaining realtime output.
-        chunk_bytes = int(24000 * 2 * 1)
+        chunk_bytes = int(24000 * 2 * 1.2)
         try:
             for chunk in self.audio_response.iter_content(chunk_size=4096):
                 if not chunk:
