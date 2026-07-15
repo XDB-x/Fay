@@ -95,6 +95,11 @@ cosyvoice_prompt_text = None
 cosyvoice_timeout_seconds = None
 cosyvoice_voice_map = None
 cosyvoice_default_voice = None
+cosyvoice_mode = None
+cosyvoice_instruct_text = None
+cosyvoice_speed = None
+cosyvoice_stream_mode = None
+cosyvoice_ws_url = None
 start_mode = None
 fay_url = None
 system_conf_path = None
@@ -350,6 +355,11 @@ def load_config(force_reload=False):
     global cosyvoice_timeout_seconds
     global cosyvoice_voice_map
     global cosyvoice_default_voice
+    global cosyvoice_mode
+    global cosyvoice_instruct_text
+    global cosyvoice_speed
+    global cosyvoice_stream_mode
+    global cosyvoice_ws_url
     global start_mode
     global fay_url
     global use_bionic_memory
@@ -592,6 +602,11 @@ def load_config(force_reload=False):
     cosyvoice_timeout_seconds = system_config.getint('key', 'cosyvoice_timeout_seconds', fallback=120)
     cosyvoice_voice_map = system_config.get('key', 'cosyvoice_voice_map', fallback='assets/voices/cosyvoice_voices.json')
     cosyvoice_default_voice = system_config.get('key', 'cosyvoice_default_voice', fallback='cosy-zh-1')
+    cosyvoice_mode = system_config.get('key', 'cosyvoice_mode', fallback='zero_shot')
+    cosyvoice_instruct_text = system_config.get('key', 'cosyvoice_instruct_text', fallback='')
+    cosyvoice_speed = system_config.getfloat('key', 'cosyvoice_speed', fallback=1.0)
+    cosyvoice_stream_mode = system_config.get('key', 'cosyvoice_stream_mode', fallback='http')
+    cosyvoice_ws_url = system_config.get('key', 'cosyvoice_ws_url', fallback='')
 
     # 读取 Embedding API 配置（base_url 可单独配置，未配置则复用 LLM）
     embedding_api_model = system_config.get('key', 'embedding_api_model', fallback='BAAI/bge-large-zh-v1.5')
@@ -669,6 +684,11 @@ def load_config(force_reload=False):
         'cosyvoice_timeout_seconds': cosyvoice_timeout_seconds,
         'cosyvoice_voice_map': cosyvoice_voice_map,
         'cosyvoice_default_voice': cosyvoice_default_voice,
+        'cosyvoice_mode': cosyvoice_mode,
+        'cosyvoice_instruct_text': cosyvoice_instruct_text,
+        'cosyvoice_speed': cosyvoice_speed,
+        'cosyvoice_stream_mode': cosyvoice_stream_mode,
+        'cosyvoice_ws_url': cosyvoice_ws_url,
 
         'start_mode': start_mode,
         'fay_url': fay_url,

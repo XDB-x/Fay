@@ -1699,36 +1699,79 @@ def transparent_stream():
         # CosyVoice receives each upstream text chunk immediately. A per-conversation
         # worker preserves audio order while the HTTP request returns without waiting.
         if config_util.tts_module == 'cosyvoice':
-            from tts.cosyvoice_stream import get_manager
-            from tts.moss_tts import build_stream_audio_message, build_stream_end_message
+            use_websocket = str(
+                getattr(config_util, 'cosyvoice_stream_mode', 'http') or 'http'
+            ).lower() == 'websocket'
+            if use_websocket:
+                from tts.cosyvoice_websocket_stream import get_manager
+                from tts.moss_tts import build_stream_pcm_message
 
-            def _emit_cosyvoice_audio(audio_path, audio_text, first, end, audio_seq):
-                wsa_server.get_instance().add_cmd(
-                    build_stream_audio_message(
-                        audio_path, audio_text, config_util.fay_url, username,
-                        conversation_id, audio_seq, first, end,
+                def _emit_cosyvoice_pcm(pcm_bytes, sample_rate, audio_text, first, end, audio_seq):
+                    wsa_server.get_instance().add_cmd(
+                        build_stream_pcm_message(
+                            pcm_bytes, audio_text, username, conversation_id,
+                            audio_seq, first, end, sample_rate=sample_rate,
+                        )
                     )
-                )
-                util.printInfo(
-                    1, username,
-                    f'[CosyVoice stream] audio sent seq={audio_seq} first={first} end={end}',
-                    time.time(),
-                )
+                    util.printInfo(
+                        1, username,
+                        f'[CosyVoice stream] pcm sent seq={audio_seq} first={first} end={end}',
+                        time.time(),
+                    )
 
-            def _emit_cosyvoice_end(first, audio_seq):
-                wsa_server.get_instance().add_cmd(
-                    build_stream_end_message(
-                        config_util.fay_url, username, conversation_id, audio_seq, first
+                def _emit_cosyvoice_end(first, audio_seq, sample_rate):
+                    wsa_server.get_instance().add_cmd(
+                        build_stream_pcm_message(
+                            b'', '', username, conversation_id,
+                            audio_seq, first, True, sample_rate=sample_rate,
+                        )
                     )
-                )
-                util.printInfo(1, username, f'[CosyVoice stream] end sent seq={audio_seq}', time.time())
+                    util.printInfo(
+                        1, username,
+                        f'[CosyVoice stream] pcm end sent seq={audio_seq}',
+                        time.time(),
+                    )
+
+                emit_audio = _emit_cosyvoice_pcm
+                emit_end = _emit_cosyvoice_end
+            else:
+                from tts.cosyvoice_stream import get_manager
+                from tts.moss_tts import build_stream_audio_message, build_stream_end_message
+
+                def _emit_cosyvoice_audio(audio_path, audio_text, first, end, audio_seq):
+                    wsa_server.get_instance().add_cmd(
+                        build_stream_audio_message(
+                            audio_path, audio_text, config_util.fay_url, username,
+                            conversation_id, audio_seq, first, end,
+                        )
+                    )
+                    util.printInfo(
+                        1, username,
+                        f'[CosyVoice stream] audio sent seq={audio_seq} first={first} end={end}',
+                        time.time(),
+                    )
+
+                def _emit_cosyvoice_end(first, audio_seq):
+                    wsa_server.get_instance().add_cmd(
+                        build_stream_end_message(
+                            config_util.fay_url, username, conversation_id, audio_seq, first
+                        )
+                    )
+                    util.printInfo(
+                        1, username,
+                        f'[CosyVoice stream] end sent seq={audio_seq}',
+                        time.time(),
+                    )
+
+                emit_audio = _emit_cosyvoice_audio
+                emit_end = _emit_cosyvoice_end
 
             def _emit_cosyvoice_error(error_key, message):
                 util.printInfo(1, username, message, time.time())
 
             get_manager().submit(
                 stream_key, text, is_first, is_end,
-                _emit_cosyvoice_audio, _emit_cosyvoice_end, _emit_cosyvoice_error,
+                emit_audio, emit_end, _emit_cosyvoice_error,
             )
             return jsonify({'code': 200, 'message': 'accepted'})
         if config_util.tts_module == 'moss':

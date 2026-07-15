@@ -169,13 +169,14 @@ class MossTtsTest(unittest.TestCase):
             seq=2,
             first=False,
             end=True,
+            sample_rate=22050,
         )
 
         self.assertEqual(message["Topic"], "human")
         self.assertEqual(message["Username"], "fay-user")
         self.assertEqual(message["Data"]["Key"], "audio_pcm")
         self.assertEqual(message["Data"]["PcmBase64"], "AAD/fw==")
-        self.assertEqual(message["Data"]["SampleRate"], 24000)
+        self.assertEqual(message["Data"]["SampleRate"], 22050)
         self.assertEqual(message["Data"]["Channels"], 1)
         self.assertEqual(message["Data"]["SampleWidth"], 2)
         self.assertEqual(message["Data"]["CONV_ID"], "conv-1")

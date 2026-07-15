@@ -984,6 +984,11 @@ class FeiFei:
                     voice_name = volcano_voice
             except Exception:
                 pass
+        if tts_module == "cosyvoice":
+            cosy_mode = str(getattr(cfg, "cosyvoice_mode", "zero_shot") or "zero_shot")
+            cosy_speed = str(getattr(cfg, "cosyvoice_speed", "1.0") or "1.0")
+            cosy_instruct = str(getattr(cfg, "cosyvoice_instruct_text", "") or "")
+            voice_name = f"{voice_name}|{cosy_mode}|{cosy_speed}|{cosy_instruct}"
         raw = f"{tts_module}|{voice_name}|{style_str}|{text}"
         return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 

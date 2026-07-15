@@ -127,6 +127,48 @@ class CosyVoiceTtsTest(unittest.TestCase):
             cfg.config = original_config
             if 'output' in locals() and output and Path(output).exists():
                 Path(output).unlink()
+    def test_instruct2_mode_sends_emotion_instruction_and_model_speed(self):
+        response = Mock()
+        response.content = b'\x01\x02' * 100
+        response.raise_for_status.return_value = None
+        session = Mock()
+        session.post.return_value = response
+        original_mode = getattr(cfg, 'cosyvoice_mode', None)
+        original_instruct_text = getattr(cfg, 'cosyvoice_instruct_text', None)
+        original_speed = getattr(cfg, 'cosyvoice_speed', None)
+        try:
+            cfg.cosyvoice_mode = 'instruct2'
+            cfg.cosyvoice_instruct_text = '请用严肃、明确的预警语气播报。<|endofprompt|>'
+            cfg.cosyvoice_speed = 1.1
+            with patch.object(cosyvoice_tts.os.path, 'abspath', side_effect=self._resolve_output), \
+                    patch.object(cosyvoice_tts.requests, 'Session', return_value=session):
+                output = cosyvoice_tts.Speech().to_sample('请注意强降雨。', None)
+            self.assertEqual(
+                'http://127.0.0.1:50000/inference_instruct2',
+                session.post.call_args.args[0],
+            )
+            self.assertEqual(
+                '请用严肃、明确的预警语气播报。<|endofprompt|>',
+                session.post.call_args.kwargs['data']['instruct_text'],
+            )
+            self.assertEqual('1.1', session.post.call_args.kwargs['data']['speed'])
+        finally:
+            cfg.cosyvoice_mode = original_mode
+            cfg.cosyvoice_instruct_text = original_instruct_text
+            cfg.cosyvoice_speed = original_speed
+            if 'output' in locals() and output and Path(output).exists():
+                Path(output).unlink()
+    def test_websocket_payload_falls_back_to_zero_shot_when_instruct2_is_configured(self):
+        original_mode = getattr(cfg, 'cosyvoice_mode', None)
+        try:
+            cfg.cosyvoice_mode = 'instruct2'
+            with patch.object(cosyvoice_tts, '_get_prompt_config', return_value=(self.prompt.name, '参考台词')):
+                payload = cosyvoice_tts.build_stream_start_payload()
+            self.assertEqual('zero_shot', payload['mode'])
+            self.assertNotIn('instruct_text', payload)
+        finally:
+            cfg.cosyvoice_mode = original_mode
+
     def test_empty_text_does_not_call_cosyvoice(self):
         session = Mock()
         with patch.object(cosyvoice_tts.requests, 'Session', return_value=session):

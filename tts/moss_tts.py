@@ -46,7 +46,7 @@ def build_stream_audio_message(audio_path, text, base_url, username,
     }
 
 
-def build_stream_pcm_message(pcm_bytes, text, username, conversation_id, seq, first, end):
+def build_stream_pcm_message(pcm_bytes, text, username, conversation_id, seq, first, end, sample_rate=24000):
     """Build the continuous PCM contract used only by MOSS Realtime."""
     try:
         sequence = int(seq)
@@ -57,7 +57,7 @@ def build_stream_pcm_message(pcm_bytes, text, username, conversation_id, seq, fi
         "Data": {
             "Key": "audio_pcm",
             "PcmBase64": base64.b64encode(bytes(pcm_bytes or b"")).decode("ascii"),
-            "SampleRate": 24000,
+            "SampleRate": int(sample_rate),
             "Channels": 1,
             "SampleWidth": 2,
             "Text": str(text or ""),
