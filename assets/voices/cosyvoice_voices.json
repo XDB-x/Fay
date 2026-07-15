@@ -1,0 +1,10 @@
+{
+  "voices": [
+    {
+      "id": "cosy-zh-1",
+      "name": "Cosy 中文音色 zh_1",
+      "prompt_audio": "assets/voices/zh_1.wav",
+      "prompt_text": "You are a helpful assistant.<|endofprompt|>不管怎么样，我和汤姆还是要感谢贝尔坎金的元首，不然以后再见，我们也成了丧尸了。"
+    }
+  ]
+}

@@ -1,18 +1,18 @@
 {
     "attribute": {
-        "additional": "\u53d1\u5446",
-        "age": "\u6210\u5e74",
+        "additional": "发呆",
+        "age": "成年",
         "birth": "Github",
-        "constellation": "\u6c34\u74f6\u5ea7",
+        "constellation": "水瓶座",
         "contact": "qq467665317",
-        "gender": "\u7537",
-        "goal": "\u5de5\u4f5c\u534f\u52a9",
-        "hobby": "\u53d1\u5446",
-        "job": "\u52a9\u7406",
+        "gender": "男",
+        "goal": "工作协助",
+        "hobby": "发呆",
+        "job": "助理",
         "name": "Fay",
-        "position": "\u966a\u4f34",
-        "voice": "zhiyan_emo",
-        "zodiac": "\u86c7"
+        "position": "陪伴",
+        "voice": "云夏",
+        "zodiac": "蛇"
     },
     "interact": {
         "QnA": "qa.csv",
@@ -24,9 +24,9 @@
             "indifferent": 10,
             "join": 10
         },
-        "playSound": true,
+        "playSound": false,
         "visualization": false,
-        "voice": "moss-default"
+        "voice": "云夏"
     },
     "items": [],
     "memory": {
@@ -44,7 +44,7 @@
             "device": "",
             "enabled": false
         },
-        "wake_word": "\u4f60\u597d",
+        "wake_word": "你好",
         "wake_word_enabled": false,
         "wake_word_type": "front"
     }

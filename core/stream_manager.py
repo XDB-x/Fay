@@ -1,6 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 import threading
 import time
+import uuid
 from utils import stream_sentence
 from scheduler.thread_manager import MyThread
 import fay_booter
@@ -70,6 +71,20 @@ class StreamManager:
         except Exception:
             # 状态对齐失败不阻断主流程
             pass
+
+    def begin_transparent_session(self, username, conversation_id=None, session_type="transparent", preserve_queue=False):
+        """Align transparent TTS with a live conversation and clear stale stop state."""
+        with self.control_lock:
+            current_conversation_id = self.conversation_ids.get(username, "")
+
+        if preserve_queue and current_conversation_id:
+            conversation_id = current_conversation_id
+        elif not conversation_id:
+            conversation_id = "conv_" + str(uuid.uuid4())
+
+        self.set_current_conversation(username, conversation_id, session_type=session_type)
+        self.set_stop_generation(username, stop=False)
+        return conversation_id
 
     def get_conversation_id(self, username):
         """获取当前会话ID（可能为空字符串）"""

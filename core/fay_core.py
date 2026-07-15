@@ -128,6 +128,13 @@ elif cfg.tts_module == 'moss':
 
     from tts.moss_tts import Speech
 
+
+
+elif cfg.tts_module == 'cosyvoice':
+
+
+    from tts.cosyvoice_tts import Speech
+
 elif cfg.tts_module == 'qwen':
 
 
@@ -750,7 +757,31 @@ class FeiFei:
                         # 进行流式处理（用于TTS，流式处理中会记录到数据库）
 
 
-                        self.__process_stream_output(text, username, f"type2_{interact.interleaver}", is_qa=False)
+                        conversation_id = stream_manager.new_instance().begin_transparent_session(
+                            username,
+                            interact.data.get("conversation_id"),
+                            session_type=f"type2_{interact.interleaver}",
+                            preserve_queue=bool(
+                                interact.data.get("queue") or interact.data.get("queue_playback")
+                            ),
+                        )
+                        interact.data["conversation_id"] = conversation_id
+                        if cfg.tts_module == "cosyvoice":
+                            direct_interact = Interact(
+                                "stream",
+                                1,
+                                {
+                                    "user": username,
+                                    "msg": str(text),
+                                    "isfirst": True,
+                                    "isend": True,
+                                    "conversation_id": conversation_id,
+                                    "cosyvoice_stream": True,
+                                },
+                            )
+                            MyThread(target=self.say, args=[direct_interact, str(text)]).start()
+                        else:
+                            self.__process_stream_output(text, username, f"type2_{interact.interleaver}", is_qa=False)
 
 
                         
@@ -1627,6 +1658,8 @@ class FeiFei:
                             result = cache_result
                             util.printInfo(1, interact.data.get('user'), 'TTS cache hit')
                         else:
+                            if cfg.tts_module == "cosyvoice" and interact.data.get("cosyvoice_stream"):
+                                return self.__stream_cosyvoice_audio(filtered_text, mood_voice, interact, text)
                             result = self.sp.to_sample(filtered_text, mood_voice)
                             self.__set_tts_cache(cache_key, result)
 
@@ -2133,6 +2166,38 @@ class FeiFei:
 
 
 
+    def __stream_cosyvoice_audio(self, text, mood_voice, interact, original_text):
+        audio_seq = 0
+        first_chunk = True
+        try:
+            for text_chunk in self.sp.split_cosyvoice_text(text):
+                for file_url in self.sp.stream_to_samples(text_chunk, mood_voice):
+                    chunk_data = dict(interact.data)
+                    chunk_data["isfirst"] = first_chunk
+                    chunk_data["isend"] = False
+                    chunk_data["audio_conversation_msg_no"] = audio_seq
+                    chunk_interact = Interact("stream", interact.interleaver, chunk_data)
+                    self.__process_output_audio(
+                        file_url,
+                        chunk_interact,
+                        original_text if first_chunk else "",
+                    )
+                    first_chunk = False
+                    audio_seq += 1
+
+            if audio_seq:
+                end_data = dict(interact.data)
+                end_data["isfirst"] = False
+                end_data["isend"] = True
+                end_data["audio_conversation_msg_no"] = audio_seq
+                self.__process_output_audio(
+                    None,
+                    Interact("stream", interact.interleaver, end_data),
+                    "",
+                )
+        except Exception as exc:
+            util.log(1, "[x] CosyVoice stream playback failed: " + str(exc))
+        return None
     #输出音频处理
 
 

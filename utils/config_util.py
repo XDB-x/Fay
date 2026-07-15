@@ -89,6 +89,12 @@ moss_tts_backend = None
 moss_tts_prompt_audio = None
 moss_tts_timeout_seconds = None
 moss_tts_cpu_threads = None
+cosyvoice_base_url = None
+cosyvoice_prompt_audio = None
+cosyvoice_prompt_text = None
+cosyvoice_timeout_seconds = None
+cosyvoice_voice_map = None
+cosyvoice_default_voice = None
 start_mode = None
 fay_url = None
 system_conf_path = None
@@ -338,6 +344,12 @@ def load_config(force_reload=False):
     global moss_tts_prompt_audio
     global moss_tts_timeout_seconds
     global moss_tts_cpu_threads
+    global cosyvoice_base_url
+    global cosyvoice_prompt_audio
+    global cosyvoice_prompt_text
+    global cosyvoice_timeout_seconds
+    global cosyvoice_voice_map
+    global cosyvoice_default_voice
     global start_mode
     global fay_url
     global use_bionic_memory
@@ -574,6 +586,12 @@ def load_config(force_reload=False):
     moss_tts_prompt_audio = system_config.get('key', 'moss_tts_prompt_audio', fallback='assets/voices/flood-default.wav')
     moss_tts_timeout_seconds = system_config.getint('key', 'moss_tts_timeout_seconds', fallback=120)
     moss_tts_cpu_threads = system_config.getint('key', 'moss_tts_cpu_threads', fallback=4)
+    cosyvoice_base_url = system_config.get('key', 'cosyvoice_base_url', fallback='http://127.0.0.1:50000')
+    cosyvoice_prompt_audio = system_config.get('key', 'cosyvoice_prompt_audio', fallback='assets/voices/zh_1.wav')
+    cosyvoice_prompt_text = system_config.get('key', 'cosyvoice_prompt_text', fallback='You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。')
+    cosyvoice_timeout_seconds = system_config.getint('key', 'cosyvoice_timeout_seconds', fallback=120)
+    cosyvoice_voice_map = system_config.get('key', 'cosyvoice_voice_map', fallback='assets/voices/cosyvoice_voices.json')
+    cosyvoice_default_voice = system_config.get('key', 'cosyvoice_default_voice', fallback='cosy-zh-1')
 
     # 读取 Embedding API 配置（base_url 可单独配置，未配置则复用 LLM）
     embedding_api_model = system_config.get('key', 'embedding_api_model', fallback='BAAI/bge-large-zh-v1.5')
@@ -645,6 +663,12 @@ def load_config(force_reload=False):
         'moss_tts_prompt_audio': moss_tts_prompt_audio,
         'moss_tts_timeout_seconds': moss_tts_timeout_seconds,
         'moss_tts_cpu_threads': moss_tts_cpu_threads,
+        'cosyvoice_base_url': cosyvoice_base_url,
+        'cosyvoice_prompt_audio': cosyvoice_prompt_audio,
+        'cosyvoice_prompt_text': cosyvoice_prompt_text,
+        'cosyvoice_timeout_seconds': cosyvoice_timeout_seconds,
+        'cosyvoice_voice_map': cosyvoice_voice_map,
+        'cosyvoice_default_voice': cosyvoice_default_voice,
 
         'start_mode': start_mode,
         'fay_url': fay_url,
@@ -717,4 +741,4 @@ def save_config(config_data):
     
     # 保存到文件
     with codecs.open(config_json_path, mode='w', encoding='utf-8') as file:
-        file.write(json.dumps(config_data, sort_keys=True, indent=4, separators=(',', ': ')))
+        file.write(json.dumps(config_data, sort_keys=True, indent=4, separators=(',', ': '), ensure_ascii=False))

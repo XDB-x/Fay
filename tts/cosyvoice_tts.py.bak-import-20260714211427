@@ -1,0 +1,83 @@
+import os
+import time
+import wave
+from pathlib import Path
+
+import requests
+
+from utils import config_util as cfg
+from utils import util
+
+
+def _resolve_prompt_path():
+    configured = Path(str(getattr(cfg, "cosyvoice_prompt_audio", "") or "")).expanduser()
+    if configured.is_absolute():
+        return configured
+    return Path(__file__).resolve().parent.parent / configured
+
+
+class Speech:
+    """Fay TTS adapter for the CosyVoice3 raw-PCM FastAPI endpoint."""
+
+    def __init__(self):
+        self.session = requests.Session()
+
+    def connect(self):
+        return None
+
+    def close(self):
+        self.session.close()
+
+    def to_sample(self, text, style):
+        del style
+        normalized_text = str(text or "").strip()
+        if not normalized_text:
+            return None
+
+        prompt_path = _resolve_prompt_path()
+        if not prompt_path.is_file():
+            util.log(1, "[x] CosyVoice prompt audio not found: " + str(prompt_path))
+            return None
+
+        base_url = str(getattr(cfg, "cosyvoice_base_url", "") or "").rstrip("/")
+        prompt_text = str(getattr(cfg, "cosyvoice_prompt_text", "") or "").strip()
+        timeout_seconds = int(getattr(cfg, "cosyvoice_timeout_seconds", 120) or 120)
+        if not base_url or not prompt_text:
+            util.log(1, "[x] CosyVoice base URL or prompt text is empty")
+            return None
+
+        os.makedirs("./samples", exist_ok=True)
+        output_path = os.path.abspath(
+            "./samples/sample-{}-cosyvoice.wav".format(uuid.uuid4().hex)
+        )
+
+        try:
+            with prompt_path.open("rb") as prompt_file:
+                response = self.session.post(
+                    base_url + "/inference_zero_shot",
+                    data={
+                        "tts_text": normalized_text,
+                        "prompt_text": prompt_text,
+                    },
+                    files={
+                        "prompt_wav": (prompt_path.name, prompt_file, "audio/wav"),
+                    },
+                    timeout=(3, timeout_seconds),
+                )
+            response.raise_for_status()
+            pcm_bytes = response.content
+            if not pcm_bytes or len(pcm_bytes) % 2 != 0:
+                raise ValueError("CosyVoice returned invalid PCM length")
+
+            with wave.open(output_path, "wb") as wav_file:
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(22050)
+                wav_file.writeframes(pcm_bytes)
+
+            return output_path
+        except Exception as exc:
+            util.log(1, "[x] CosyVoice TTS failed: " + str(exc))
+            if os.path.isfile(output_path):
+                os.remove(output_path)
+            return None

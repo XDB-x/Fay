@@ -14,8 +14,8 @@ ali_nls_app_key=你的阿里云AppKey
 
 
 
-#tts类型（切换请重新选择所需要的声音）azure、ali、gptsovits、volcano、gptsovits_v3、moss、qwen、cosyvoice
-tts_module=cosyvoice
+#tts类型（切换请重新选择所需要的声音）azure、ali、gptsovits、volcano、gptsovits_v3
+tts_module=moss
 
 # 微软 文字转语音 服务密钥（非必须，使用可产生不同情绪的音频）https://azure.microsoft.com/zh-cn/services/cognitive-services/text-to-speech/
 ms_tts_key=
@@ -40,14 +40,6 @@ moss_tts_base_url=http://192.168.2.60:18084
 moss_tts_prompt_audio=/data/moss/assets/audio/zh_1.wav
 moss_tts_timeout_seconds=120
 moss_tts_cpu_threads=4
-
-# CosyVoice3 FastAPI zero-shot TTS
-cosyvoice_base_url=http://192.168.2.60:50000
-cosyvoice_prompt_audio=assets/voices/zh_1.wav
-cosyvoice_prompt_text=You are a helpful assistant.<|endofprompt|>不管怎么样，我和汤姆还是要感谢贝尔坎金的元首，不然以后再见，我们也成了丧尸了。
-cosyvoice_timeout_seconds=120
-cosyvoice_voice_map=assets/voices/cosyvoice_voices.json
-cosyvoice_default_voice=cosy-zh-1
 
 # Doubao-语音合成 服务密钥 https://www.volcengine.com/product/voice-tech
 volcano_tts_appid=
