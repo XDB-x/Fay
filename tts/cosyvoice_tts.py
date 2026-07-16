@@ -155,10 +155,15 @@ def _get_prompt_config():
     map_path = _resolve_project_path(getattr(cfg, "cosyvoice_voice_map", ""))
     try:
         payload = json.loads(map_path.read_text(encoding="utf-8"))
-        for voice in payload.get("voices", []):
-            if not isinstance(voice, dict):
+        voices = payload.get("voices", [])
+        for voice_id in (selected_voice, default_voice):
+            if not voice_id:
                 continue
-            if str(voice.get("id") or "") in (selected_voice, default_voice):
+            for voice in voices:
+                if not isinstance(voice, dict):
+                    continue
+                if str(voice.get("id") or "") != voice_id:
+                    continue
                 prompt_audio = str(voice.get("prompt_audio") or "").strip()
                 prompt_text = str(voice.get("prompt_text") or "").strip()
                 if prompt_audio and prompt_text:

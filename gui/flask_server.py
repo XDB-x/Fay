@@ -455,7 +455,9 @@ def api_submit():
                 else:
                     existing[key] = value
 
-        merge_configs(existing_config, config_data['config'])
+        submitted_config = config_data['config']
+        merge_configs(existing_config, submitted_config)
+        config_util.sync_selected_voice(existing_config, submitted_config)
 
         config_util.save_config(existing_config)
         config_util.load_config()

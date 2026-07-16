@@ -11,6 +11,12 @@
       "name": "Cosy 新闻播报女声",
       "prompt_audio": "assets/voices/news-female.wav",
       "prompt_text": "You are a helpful assistant.<|endofprompt|>会议强调，开展知识产权综合管理改革试点。"
+    },
+    {
+      "id": "cosy-news-male",
+      "name": "Cosy 新闻播报男声",
+      "prompt_audio": "assets/voices/news-male.wav",
+      "prompt_text": "You are a helpful assistant.<|endofprompt|>会议强调，开展知识产权综合管理改革试点。"
     }
   ]
 }

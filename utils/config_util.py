@@ -745,6 +745,18 @@ def save_api_config_to_local(api_config, system_conf_path, config_json_path, sav
     except Exception as e:
         util.log(2, f"保存配置中心配置到本地文件时出错: {str(e)}")
 
+def sync_selected_voice(existing_config, submitted_config):
+    """Sync the voice selected in settings to the runtime TTS voice."""
+    if not isinstance(existing_config, dict) or not isinstance(submitted_config, dict):
+        return
+    attribute = submitted_config.get('attribute')
+    if not isinstance(attribute, dict):
+        return
+    selected_voice = str(attribute.get('voice') or '').strip()
+    if selected_voice:
+        existing_config.setdefault('interact', {})['voice'] = selected_voice
+
+
 @synchronized
 def save_config(config_data):
     """
